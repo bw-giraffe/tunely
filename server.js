@@ -2,46 +2,21 @@
 
 //require express in our app
 var express = require('express');
+var db = require('./models');
 // generate a new express app and call it 'app'
 var app = express();
+var bodyParser = require('body-parser');
 
 // serve static files from public folder
 app.use(express.static(__dirname + '/public'));
 
+// var bodyParser = require('body-parser');
+var parseUrlencoded = bodyParser.urlencoded({extended: true});
+
+app.use(parseUrlencoded);
 /************
  * DATABASE *
  ************/
-
-/* hard-coded data */
-var albums = [];
-albums.push({
-              _id: 132,
-              artistName: 'Nine Inch Nails',
-              name: 'The Downward Spiral',
-              releaseDate: '1994, March 8',
-              genres: [ 'industrial', 'industrial metal' ]
-            });
-albums.push({
-              _id: 133,
-              artistName: 'Metallica',
-              name: 'Metallica',
-              releaseDate: '1991, August 12',
-              genres: [ 'heavy metal' ]
-            });
-albums.push({
-              _id: 134,
-              artistName: 'The Prodigy',
-              name: 'Music for the Jilted Generation',
-              releaseDate: '1994, July 4',
-              genres: [ 'electronica', 'breakbeat hardcore', 'rave', 'jungle' ]
-            });
-albums.push({
-              _id: 135,
-              artistName: 'Johnny Cash',
-              name: 'Unchained',
-              releaseDate: '1996, November 5',
-              genres: [ 'country', 'rock' ]
-            });
 
 
 
@@ -72,6 +47,30 @@ app.get('/api', function api_index (req, res){
     ]
   });
 });
+
+app.get('/api/albums', function album_index (req, res){
+    db.Album.find({}, function(err, albums){
+      if(err) {
+        res.send(err);
+      } else {
+        console.log("you got albums");
+        res.json(albums);
+      }
+  });
+});
+// app.post('/cities', parseUrlencoded, function (request, response) {
+app.post('/api/albums', function create_album (req, res){
+  var data = req.body;
+  var genres = data.genres.split(',').map(function(item) { return item.trim(); } );
+  data.genres = genres;
+
+   db.Album.create(data, function(err, albums){
+    if (err) { return console.log('ERROR', err); }
+    console.log("all albums:", albums);
+    console.log("created", albums.length, "albums");
+    res.json(data);
+  });
+})
 
 /**********
  * SERVER *
